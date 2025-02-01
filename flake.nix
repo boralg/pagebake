@@ -1,5 +1,5 @@
 {
-  description = "A simple Static Site Generator library";
+  description = "Simple Static Site Generator library";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
