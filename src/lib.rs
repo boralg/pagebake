@@ -37,8 +37,13 @@ impl Router {
         fs::create_dir_all(export_path)?;
 
         for (path, page) in &self.routes {
+            let page_path = match path.strip_prefix("/").unwrap() {
+                "" => "index",
+                path => path
+            };
+
             let mut export_path = export_path.to_path_buf();
-            export_path.push(path.strip_prefix("/").unwrap());
+            export_path.push(page_path);
             export_path.set_extension("html");
 
             fs::create_dir_all(export_path.parent().unwrap())?;
