@@ -29,8 +29,13 @@ impl Router {
         self
     }
 
-    pub fn fallback(mut self, page: fn() -> String) -> Self {
-        todo!()
+    pub fn fallback(self, page: fn() -> String) -> Self {
+        let path = "/404";
+        if self.routes.contains_key(path) {
+            panic!("Overlapping method route. Fallback handler already exists");
+        }
+
+        self.route(path, page)
     }
 
     pub fn render(&self, export_path: &Path) -> io::Result<()> {
@@ -39,7 +44,7 @@ impl Router {
         for (path, page) in &self.routes {
             let page_path = match path.strip_prefix("/").unwrap() {
                 "" => "index",
-                path => path
+                path => path,
             };
 
             let mut export_path = export_path.to_path_buf();
