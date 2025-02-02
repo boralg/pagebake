@@ -23,7 +23,7 @@ where
 }
 
 pub fn redirect(path: &str) -> Response {
-    Response::Redirect(path.to_string())
+    Response::Redirect(path.to_owned())
 }
 
 impl Router {
@@ -52,11 +52,11 @@ impl Router {
 
         match response {
             Response::Get(page) => {
-                self.routes.insert(path.to_string(), page);
+                self.routes.insert(path.to_owned(), page);
             }
             Response::Redirect(redirect_path) => {
                 validate_path(&redirect_path);
-                self.redirects.insert(path.to_string(), redirect_path);
+                self.redirects.insert(path.to_owned(), redirect_path);
             }
         };
 
