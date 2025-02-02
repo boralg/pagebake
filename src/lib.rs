@@ -31,6 +31,7 @@ impl Router {
         Self {
             routes: HashMap::new(),
             redirects: HashMap::new(),
+            fallback: None,
         }
     }
 
@@ -62,16 +63,16 @@ impl Router {
         self
     }
 
-    pub fn fallback<R>(self, page: R) -> Self
+    pub fn fallback<R>(mut self, page: R) -> Self
     where
         R: Fn() -> String + 'static,
     {
-        let path = "/404";
-        if self.routes.contains_key(path) {
+        if let Some(_) = self.fallback {
             panic!("Overlapping method route. Fallback handler already exists");
         }
 
-        self.route(path, get(page))
+        self.fallback = Some(Box::new(page));
+        self
     }
 
     // pub fn merge(mut self, router: Router) -> Self {
@@ -91,6 +92,14 @@ impl Router {
                 source,
                 Box::new(move || Self::render_redirect_page(&target)),
             );
+        }
+
+        if let Some(fallback) = self.fallback {
+            if self.routes.contains_key("/404") {
+                panic!("Overlap with fallback handler. Route `/404` already exists");
+            }
+
+            self.routes.insert("/404".to_owned(), fallback);
         }
 
         for (path, page) in &self.routes {
