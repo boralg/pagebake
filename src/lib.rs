@@ -67,8 +67,8 @@ impl Router {
         self.route(path, get(page))
     }
 
-    pub fn render(mut self, export_path: &Path) -> io::Result<()> {
-        fs::create_dir_all(export_path)?;
+    pub fn render(mut self, output_path: &Path) -> io::Result<()> {
+        fs::create_dir_all(output_path)?;
 
         for (source, target) in self.redirects {
             self.routes.insert(
@@ -83,7 +83,7 @@ impl Router {
                 path => path,
             };
 
-            let mut export_path = export_path.to_path_buf();
+            let mut export_path = output_path.to_path_buf();
             export_path.push(page_path);
             export_path.set_extension("html");
 
