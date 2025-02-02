@@ -5,17 +5,17 @@ use std::{
 };
 
 pub struct Router {
-    routes: HashMap<String, fn() -> String>,
+    routes: HashMap<String, Box<dyn Fn() -> String>>,
     redirects: HashMap<String, String>,
 }
 
 pub enum Response {
-    Get(fn() -> String),
+    Get(Box<dyn Fn() -> String>),
     Redirect(String),
 }
 
-pub fn get(page: fn() -> String) -> Response {
-    Response::Get(page)
+pub fn get(page: impl Fn() -> String + 'static) -> Response {
+    Response::Get(Box::new(page))
 }
 
 pub fn redirect(path: &str) -> Response {
@@ -67,21 +67,14 @@ impl Router {
         self.route(path, get(page))
     }
 
-    pub fn render(self, export_path: &Path) -> io::Result<()> {
+    pub fn render(mut self, export_path: &Path) -> io::Result<()> {
         fs::create_dir_all(export_path)?;
 
         for (source, target) in self.redirects {
-            let page_path = match source.strip_prefix("/").unwrap() {
-                "" => "index",
-                path => path,
-            };
-
-            let mut export_path = export_path.to_path_buf();
-            export_path.push(page_path);
-            export_path.set_extension("html");
-
-            fs::create_dir_all(export_path.parent().unwrap())?;
-            fs::write(export_path, Self::render_redirect_page(target))?;
+            self.routes.insert(
+                source,
+                Box::new(move || Self::render_redirect_page(&target)),
+            );
         }
 
         for (path, page) in &self.routes {
@@ -101,7 +94,7 @@ impl Router {
         Ok(())
     }
 
-    fn render_redirect_page(target_url: String) -> String {
+    fn render_redirect_page(target_url: &str) -> String {
         format!(
             r#"<!DOCTYPE HTML>
 <meta charset="UTF-8">
