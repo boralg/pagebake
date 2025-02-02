@@ -6,25 +6,54 @@ use std::{
 
 pub struct Router {
     routes: HashMap<String, fn() -> String>,
+    redirects: HashMap<String, String>,
+}
+
+pub enum Response {
+    Get(fn() -> String),
+    Redirect(String),
+}
+
+pub fn get(page: fn() -> String) -> Response {
+    Response::Get(page)
+}
+
+pub fn redirect(path: &str) -> Response {
+    Response::Redirect(path.to_string())
 }
 
 impl Router {
     pub fn new() -> Self {
         Self {
             routes: HashMap::new(),
+            redirects: HashMap::new(),
         }
     }
 
-    pub fn route(mut self, path: &str, page: fn() -> String) -> Self {
-        if path.is_empty() {
-            panic!("Paths must start with a `/`. Use \"/\" for root routes");
-        } else if !path.starts_with('/') {
-            panic!("Paths must start with a `/`");
+    pub fn route(mut self, path: &str, response: Response) -> Self {
+        fn validate_path(path: &str) {
+            if path.is_empty() {
+                panic!("Paths must start with a `/`. Use \"/\" for root routes");
+            } else if !path.starts_with('/') {
+                panic!("Paths must start with a `/`");
+            }
         }
 
-        if let Some(_) = self.routes.insert(path.to_string(), page) {
+        validate_path(path);
+
+        if self.routes.contains_key(path) || self.redirects.contains_key(path) {
             panic!("Overlapping method route. Handler for `{path}` already exists");
         }
+
+        match response {
+            Response::Get(page) => {
+                self.routes.insert(path.to_string(), page);
+            }
+            Response::Redirect(redirect_path) => {
+                validate_path(&redirect_path);
+                self.redirects.insert(path.to_string(), redirect_path);
+            }
+        };
 
         self
     }
@@ -35,11 +64,25 @@ impl Router {
             panic!("Overlapping method route. Fallback handler already exists");
         }
 
-        self.route(path, page)
+        self.route(path, get(page))
     }
 
-    pub fn render(&self, export_path: &Path) -> io::Result<()> {
+    pub fn render(self, export_path: &Path) -> io::Result<()> {
         fs::create_dir_all(export_path)?;
+
+        for (source, target) in self.redirects {
+            let page_path = match source.strip_prefix("/").unwrap() {
+                "" => "index",
+                path => path,
+            };
+
+            let mut export_path = export_path.to_path_buf();
+            export_path.push(page_path);
+            export_path.set_extension("html");
+
+            fs::create_dir_all(export_path.parent().unwrap())?;
+            fs::write(export_path, Self::render_redirect_page(target))?;
+        }
 
         for (path, page) in &self.routes {
             let page_path = match path.strip_prefix("/").unwrap() {
@@ -56,5 +99,22 @@ impl Router {
         }
 
         Ok(())
+    }
+
+    fn render_redirect_page(target_url: String) -> String {
+        format!(
+            r#"<!DOCTYPE HTML>
+<meta charset="UTF-8">
+<meta http-equiv="refresh" content="0; url={0}">
+ 
+<script>
+  window.location.href = "{0}";
+</script>
+ 
+<title>Page Redirection</title>
+
+Redirecting to <a href="{0}">{0}</a>..."#,
+            target_url
+        )
     }
 }
