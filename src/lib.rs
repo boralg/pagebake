@@ -7,7 +7,7 @@ use std::{
 pub struct Router {
     routes: HashMap<String, Box<dyn Fn() -> String>>,
     redirects: HashMap<String, String>,
-    fallback: Option<Box<dyn Fn() -> String>>,
+    fallbacks: HashMap<String, Box<dyn Fn() -> String>>,
 }
 
 pub enum Response {
@@ -31,7 +31,7 @@ impl Router {
         Self {
             routes: HashMap::new(),
             redirects: HashMap::new(),
-            fallback: None,
+            fallbacks: HashMap::new(),
         }
     }
 
@@ -67,11 +67,11 @@ impl Router {
     where
         R: Fn() -> String + 'static,
     {
-        if let Some(_) = self.fallback {
+        if self.fallbacks.contains_key("/") {
             panic!("Overlapping method route. Fallback handler already exists");
         }
 
-        self.fallback = Some(Box::new(page));
+        self.fallbacks.insert("/".to_owned(), Box::new(page));
         self
     }
 
@@ -94,12 +94,14 @@ impl Router {
             );
         }
 
-        if let Some(fallback) = self.fallback {
-            if self.routes.contains_key("/404") {
-                panic!("Overlap with fallback handler. Route `/404` already exists");
+        for (mut path, page) in self.fallbacks {
+            path.push_str("404");
+
+            if self.routes.contains_key(&path) {
+                panic!("Overlap with fallback handler. Route `{path}` already exists");
             }
 
-            self.routes.insert("/404".to_owned(), fallback);
+            self.routes.insert(path, page);
         }
 
         for (path, page) in &self.routes {
