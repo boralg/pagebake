@@ -95,6 +95,9 @@ impl Router {
         }
 
         for (mut path, page) in self.fallbacks {
+            if !path.ends_with("/") {
+                path.push('/');
+            }
             path.push_str("404");
 
             if self.routes.contains_key(&path) {
