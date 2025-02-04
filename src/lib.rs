@@ -75,14 +75,30 @@ impl Router {
         self
     }
 
-    // pub fn merge(mut self, router: Router) -> Self {
-    //     for (source, target) in router.redirects {
-    //         self.redirects.insert(
-    //             source,
-    //             ,
-    //         );
-    //     }
-    // }
+    pub fn merge(mut self, router: Router) -> Self {
+        for (source, target) in router.redirects {
+            if self.redirects.contains_key(&source) {
+                panic!("Overlapping method route. Redirect handler for `{source}` already exists");
+            }
+            self.redirects.insert(source, target);
+        }
+
+        for (path, page) in router.routes {
+            if self.routes.contains_key(&path) {
+                panic!("Overlapping method route. Handler for `{path}` already exists");
+            }
+            self.routes.insert(path, page);
+        }
+
+        for (path, page) in router.fallbacks {
+            if self.fallbacks.contains_key(&path) {
+                panic!("Overlapping method route. Fallback handler for `{path}` already exists");
+            }
+            self.fallbacks.insert(path, page);
+        }
+
+        self
+    }
 
     pub fn render(mut self, output_path: &Path) -> io::Result<()> {
         fs::create_dir_all(output_path)?;
