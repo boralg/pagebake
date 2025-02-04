@@ -100,6 +100,36 @@ impl Router {
         self
     }
 
+    pub fn nest(self, prefix: &str, router: Router) -> Self {
+        let prefix = if prefix == "/" {
+            "".to_owned()
+        } else {
+            prefix.trim_end_matches('/').to_owned()
+        };
+
+        let mut router = router;
+
+        router.redirects = router
+            .redirects
+            .into_iter()
+            .map(|(source, target)| (format!("{prefix}{source}"), format!("{prefix}{target}")))
+            .collect();
+
+        router.routes = router
+            .routes
+            .into_iter()
+            .map(|(path, page)| (format!("{prefix}{path}"), page))
+            .collect();
+
+        router.fallbacks = router
+            .fallbacks
+            .into_iter()
+            .map(|(path, page)| (format!("{prefix}{path}"), page))
+            .collect();
+
+        self.merge(router)
+    }
+
     pub fn render(mut self, output_path: &Path) -> io::Result<()> {
         fs::create_dir_all(output_path)?;
 
