@@ -8,6 +8,21 @@ pub struct Router {
     routes: HashMap<String, Box<dyn Fn() -> String>>,
     redirects: HashMap<String, String>,
     fallbacks: HashMap<String, Box<dyn Fn() -> String>>,
+    config: RouterConfig,
+}
+
+pub struct RouterConfig {
+    fallback_page_name: String,
+    create_redirect_pages: bool,
+}
+
+impl Default for RouterConfig {
+    fn default() -> Self {
+        Self {
+            fallback_page_name: "404".to_owned(),
+            create_redirect_pages: true,
+        }
+    }
 }
 
 pub enum Response {
@@ -32,6 +47,16 @@ impl Router {
             routes: HashMap::new(),
             redirects: HashMap::new(),
             fallbacks: HashMap::new(),
+            config: Default::default(),
+        }
+    }
+
+    pub fn with_config(config: RouterConfig) -> Self {
+        Self {
+            routes: HashMap::new(),
+            redirects: HashMap::new(),
+            fallbacks: HashMap::new(),
+            config,
         }
     }
 
@@ -133,18 +158,20 @@ impl Router {
     pub fn render(mut self, output_path: &Path) -> io::Result<()> {
         fs::create_dir_all(output_path)?;
 
-        for (source, target) in self.redirects {
-            self.routes.insert(
-                source,
-                Box::new(move || Self::render_redirect_page(&target)),
-            );
+        if self.config.create_redirect_pages {
+            for (source, target) in self.redirects {
+                self.routes.insert(
+                    source,
+                    Box::new(move || Self::render_redirect_page(&target)),
+                );
+            }
         }
 
         for (mut path, page) in self.fallbacks {
             if !path.ends_with("/") {
                 path.push('/');
             }
-            path.push_str("404");
+            path.push_str(&self.config.fallback_page_name);
 
             if self.routes.contains_key(&path) {
                 panic!("Overlap with fallback handler. Route `{path}` already exists");
