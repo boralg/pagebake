@@ -150,50 +150,7 @@ impl Router {
         fs::create_dir_all(output_path)?;
 
         if config.resolve_redirect_chains {
-            let mut compressed = HashMap::<String, String>::new();
-            let mut resolved = HashMap::<String, String>::new();
-
-            for (source, target) in &self.redirects {
-                if compressed.contains_key(source) {
-                    continue;
-                }
-
-                let (final_target, visited) = 'resolve: {
-                    let mut visited = HashSet::<&String>::new();
-                    visited.insert(&source);
-
-                    let mut final_target = target;
-
-                    if let Some(compressed_target) = compressed.get(final_target) {
-                        break 'resolve (compressed_target.to_owned(), visited);
-                    }
-
-                    while let Some(next_target) = self.redirects.get(final_target) {
-                        if visited.contains(next_target) {
-                            panic!(
-                            "Cycle in redirects. Page `{next_target}` is both a source and target"
-                            );
-                        }
-
-                        visited.insert(final_target);
-                        final_target = next_target;
-
-                        if let Some(compressed_target) = compressed.get(final_target) {
-                            break 'resolve (compressed_target.to_owned(), visited);
-                        }
-                    }
-
-                    (final_target.to_owned(), visited)
-                };
-
-                for visited in visited {
-                    compressed.insert(visited.to_owned(), final_target.to_owned());
-                }
-
-                resolved.insert(source.to_owned(), final_target.to_owned());
-            }
-
-            self.redirects = resolved;
+            self.redirects = self.resolve_redirects();
         }
 
         if config.create_redirect_pages {
@@ -233,6 +190,53 @@ impl Router {
         }
 
         Ok(())
+    }
+
+    fn resolve_redirects(&self) -> HashMap<String, String> {
+        let mut compressed = HashMap::<String, String>::new();
+        let mut resolved = HashMap::<String, String>::new();
+
+        for (source, target) in &self.redirects {
+            if compressed.contains_key(source) {
+                continue;
+            }
+
+            let (final_target, visited) = 'resolve: {
+                let mut visited = HashSet::<&String>::new();
+                visited.insert(&source);
+
+                let mut final_target = target;
+
+                if let Some(compressed_target) = compressed.get(final_target) {
+                    break 'resolve (compressed_target.to_owned(), visited);
+                }
+
+                while let Some(next_target) = self.redirects.get(final_target) {
+                    if visited.contains(next_target) {
+                        panic!(
+                            "Cycle in redirects. Page `{next_target}` is both a source and target"
+                        );
+                    }
+
+                    visited.insert(final_target);
+                    final_target = next_target;
+
+                    if let Some(compressed_target) = compressed.get(final_target) {
+                        break 'resolve (compressed_target.to_owned(), visited);
+                    }
+                }
+
+                (final_target.to_owned(), visited)
+            };
+
+            for visited in visited {
+                compressed.insert(visited.to_owned(), final_target.to_owned());
+            }
+
+            resolved.insert(source.to_owned(), final_target.to_owned());
+        }
+
+        resolved
     }
 
     fn render_redirect_page(target_url: &str) -> String {
