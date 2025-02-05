@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs, io,
     path::{Path, PathBuf},
 };
@@ -12,6 +12,7 @@ pub struct Router {
 
 pub struct RenderConfig {
     fallback_page_name: String,
+    resolve_redirect_chains: bool,
     create_redirect_pages: bool,
 }
 
@@ -19,6 +20,7 @@ impl Default for RenderConfig {
     fn default() -> Self {
         Self {
             fallback_page_name: "404".to_owned(),
+            resolve_redirect_chains: true,
             create_redirect_pages: true,
         }
     }
@@ -146,6 +148,53 @@ impl Router {
 
     pub fn render(mut self, output_path: &Path, config: RenderConfig) -> io::Result<()> {
         fs::create_dir_all(output_path)?;
+
+        if config.resolve_redirect_chains {
+            let mut compressed = HashMap::<String, String>::new();
+            let mut resolved = HashMap::<String, String>::new();
+
+            for (source, target) in &self.redirects {
+                if compressed.contains_key(source) {
+                    continue;
+                }
+
+                let (final_target, visited) = 'resolve: {
+                    let mut visited = HashSet::<&String>::new();
+                    visited.insert(&source);
+
+                    let mut final_target = target;
+
+                    if let Some(compressed_target) = compressed.get(final_target) {
+                        break 'resolve (compressed_target.to_owned(), visited);
+                    }
+
+                    while let Some(next_target) = self.redirects.get(final_target) {
+                        if visited.contains(next_target) {
+                            panic!(
+                            "Cycle in redirects. Page `{next_target}` is both a source and target"
+                            );
+                        }
+
+                        visited.insert(final_target);
+                        final_target = next_target;
+
+                        if let Some(compressed_target) = compressed.get(final_target) {
+                            break 'resolve (compressed_target.to_owned(), visited);
+                        }
+                    }
+
+                    (final_target.to_owned(), visited)
+                };
+
+                for visited in visited {
+                    compressed.insert(visited.to_owned(), final_target.to_owned());
+                }
+
+                resolved.insert(source.to_owned(), final_target.to_owned());
+            }
+
+            self.redirects = resolved;
+        }
 
         if config.create_redirect_pages {
             for (source, target) in self.redirects {
