@@ -30,7 +30,7 @@ impl Redirect<'_> {
 <body>
     <script>
         (function() {{
-            window.location.href = "{0}";
+            window.location.replace("{0}");
         }})();
     </script>
 
