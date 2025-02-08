@@ -169,6 +169,19 @@ impl Router {
             }
         }
 
+        for (mut path, page) in self.fallbacks {
+            if !path.ends_with("/") {
+                path.push('/');
+            }
+            path.push_str(&config.fallback_page_name);
+
+            if self.routes.contains_key(&path) {
+                panic!("Overlap with fallback handler. Route `{path}` already exists");
+            }
+
+            self.routes.insert(path, page);
+        }
+
         if let Some(renderer) = config.redirect_list {
             let redirects = self
                 .redirects
@@ -183,19 +196,6 @@ impl Router {
 
             fs::create_dir_all(export_path.parent().unwrap())?;
             fs::write(export_path, redirect_list)?;
-        }
-
-        for (mut path, page) in self.fallbacks {
-            if !path.ends_with("/") {
-                path.push('/');
-            }
-            path.push_str(&config.fallback_page_name);
-
-            if self.routes.contains_key(&path) {
-                panic!("Overlap with fallback handler. Route `{path}` already exists");
-            }
-
-            self.routes.insert(path, page);
         }
 
         for (path, page) in self.routes {
