@@ -20,16 +20,23 @@ impl Redirect<'_> {
         Box::new(|target_url| {
             format!(
                 r#"<!DOCTYPE HTML>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url={0}">
- 
-<script>
-  window.location.href = "{0}";
-</script>
- 
-<title>Page Redirection</title>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url={0}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Redirection</title>
+</head>
+<body>
+    <script>
+        (function() {{
+            window.location.href = "{0}";
+        }})();
+    </script>
 
-Redirecting to <a href="{0}">{0}</a>..."#,
+    <p>Redirecting to <a href="{0}">{0}</a>...</p>
+</body>
+</html>"#,
                 target_url
             )
         })
