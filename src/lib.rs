@@ -5,9 +5,9 @@ use std::{
 };
 
 pub struct Router {
-    routes: HashMap<String, Box<dyn Fn() -> String>>,
+    routes: HashMap<String, Box<dyn FnOnce() -> String>>,
     redirects: HashMap<String, String>,
-    fallbacks: HashMap<String, Box<dyn Fn() -> String>>,
+    fallbacks: HashMap<String, Box<dyn FnOnce() -> String>>,
 }
 
 pub struct RenderConfig {
@@ -27,13 +27,13 @@ impl Default for RenderConfig {
 }
 
 pub enum Response {
-    Get(Box<dyn Fn() -> String>),
+    Get(Box<dyn FnOnce() -> String>),
     Redirect(String),
 }
 
 pub fn get<R>(page: R) -> Response
 where
-    R: Fn() -> String + 'static,
+    R: FnOnce() -> String + 'static,
 {
     Response::Get(Box::new(page))
 }
@@ -81,7 +81,7 @@ impl Router {
 
     pub fn fallback<R>(mut self, page: R) -> Self
     where
-        R: Fn() -> String + 'static,
+        R: FnOnce() -> String + 'static,
     {
         if self.fallbacks.contains_key("/") {
             panic!("Overlapping method route. Fallback handler already exists");
@@ -175,7 +175,7 @@ impl Router {
             self.routes.insert(path, page);
         }
 
-        for (path, page) in &self.routes {
+        for (path, page) in self.routes {
             let page_path = match path.strip_prefix("/").unwrap() {
                 "" => "index",
                 path => path,
