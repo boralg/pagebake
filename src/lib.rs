@@ -26,7 +26,7 @@ impl Default for RenderConfig {
     fn default() -> Self {
         Self {
             fallback_page_name: "404".to_owned(),
-            resolve_redirect_chains: true,
+            resolve_redirect_chains: false,
             redirect_page_renderer: Some(Redirect::base_redirect_page()),
             redirect_list: None,
         }
