@@ -56,6 +56,30 @@ impl RedirectList {
             }),
         }
     }
+
+    pub fn for_static_web_server() -> Self {
+        RedirectList {
+            file_name: "config.toml",
+            content_renderer: Box::new(|redirects: Vec<Redirect>| {
+                let mut content = String::from("[advanced]\n\n");
+
+                content.push_str(
+                    &redirects
+                        .iter()
+                        .map(|r| {
+                            format!(
+                                "[[advanced.redirects]]\nsource = \"{}\"\ndestination = \"{}\"\nkind = 302",
+                                r.source, r.target
+                            )
+                        })
+                        .collect::<Vec<String>>()
+                        .join("\n\n"),
+                );
+
+                content
+            }),
+        }
+    }
 }
 
 impl Router {
