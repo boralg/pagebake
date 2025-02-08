@@ -36,6 +36,21 @@ Redirecting to <a href="{0}">{0}</a>..."#,
     }
 }
 
+impl RedirectList {
+    pub fn for_cloudflare_pages() -> Self {
+        RedirectList {
+            file_name: "_redirects",
+            content_renderer: Box::new(|redirects: Vec<Redirect>| {
+                redirects
+                    .iter()
+                    .map(|r| format!("{} {}", r.source, r.target))
+                    .collect::<Vec<String>>()
+                    .join("\n")
+            }),
+        }
+    }
+}
+
 impl Router {
     pub(crate) fn resolve_redirects(&self) -> HashMap<String, String> {
         let mut resolved = HashMap::<String, String>::new();
