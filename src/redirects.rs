@@ -7,11 +7,33 @@ pub struct Redirect<'a> {
     pub target: &'a str,
 }
 
-type RedirectListRenderer = Box<dyn FnOnce(Vec<Redirect>) -> String>;
+pub type RedirectPageRenderer = Box<dyn Fn(&str) -> String>;
+pub type RedirectListRenderer = Box<dyn FnOnce(Vec<Redirect>) -> String>;
 
 pub struct RedirectList {
     pub file_name: &'static str,
     pub content_renderer: RedirectListRenderer,
+}
+
+impl Redirect<'_> {
+    pub fn base_redirect_page() -> RedirectPageRenderer {
+        Box::new(|target_url| {
+            format!(
+                r#"<!DOCTYPE HTML>
+<meta charset="UTF-8">
+<meta http-equiv="refresh" content="0; url={0}">
+ 
+<script>
+  window.location.href = "{0}";
+</script>
+ 
+<title>Page Redirection</title>
+
+Redirecting to <a href="{0}">{0}</a>..."#,
+                target_url
+            )
+        })
+    }
 }
 
 impl Router {
@@ -37,22 +59,5 @@ impl Router {
         }
 
         resolved
-    }
-
-    pub(crate) fn render_redirect_page(target_url: &str) -> String {
-        format!(
-            r#"<!DOCTYPE HTML>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url={0}">
- 
-<script>
-  window.location.href = "{0}";
-</script>
- 
-<title>Page Redirection</title>
-
-Redirecting to <a href="{0}">{0}</a>..."#,
-            target_url
-        )
     }
 }

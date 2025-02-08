@@ -2,9 +2,10 @@ use std::{
     collections::{HashMap, HashSet},
     fs, io,
     path::{Path, PathBuf},
+    rc::Rc,
 };
 
-use redirects::{Redirect, RedirectList};
+use redirects::{Redirect, RedirectList, RedirectPageRenderer};
 
 pub mod redirects;
 
@@ -17,7 +18,7 @@ pub struct Router {
 pub struct RenderConfig {
     pub fallback_page_name: String,
     pub resolve_redirect_chains: bool,
-    pub create_redirect_pages: bool,
+    pub redirect_page_renderer: Option<RedirectPageRenderer>,
     pub redirect_list: Option<RedirectList>,
 }
 
@@ -26,7 +27,7 @@ impl Default for RenderConfig {
         Self {
             fallback_page_name: "404".to_owned(),
             resolve_redirect_chains: true,
-            create_redirect_pages: true,
+            redirect_page_renderer: Some(Redirect::base_redirect_page()),
             redirect_list: None,
         }
     }
@@ -159,13 +160,15 @@ impl Router {
             self.redirects = self.resolve_redirects();
         }
 
-        if config.create_redirect_pages {
+        if let Some(renderer) = config.redirect_page_renderer {
+            let renderer = Rc::new(renderer);
+
             for (source, target) in &self.redirects {
+                let renderer = Rc::clone(&renderer);
                 let target = target.to_owned();
-                self.routes.insert(
-                    source.to_owned(),
-                    Box::new(move || Self::render_redirect_page(&target)),
-                );
+
+                self.routes
+                    .insert(source.to_owned(), Box::new(move || renderer(&target)));
             }
         }
 
