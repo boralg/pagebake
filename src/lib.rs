@@ -11,9 +11,9 @@ pub struct Router {
 }
 
 pub struct RenderConfig {
-    fallback_page_name: String,
-    resolve_redirect_chains: bool,
-    create_redirect_pages: bool,
+    pub fallback_page_name: String,
+    pub resolve_redirect_chains: bool,
+    pub create_redirect_pages: bool,
 }
 
 impl Default for RenderConfig {
