@@ -63,7 +63,7 @@ impl Router {
 
             while let Some(next_target) = self.redirects.get(final_target) {
                 if visited.contains(next_target) {
-                    panic!("Cycle in redirects. Page `{next_target}` is both a source and target");
+                    panic!("Cycle in redirects starting at `{next_target}`");
                 }
 
                 visited.insert(final_target);
