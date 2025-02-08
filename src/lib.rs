@@ -14,6 +14,19 @@ pub struct RenderConfig {
     pub fallback_page_name: String,
     pub resolve_redirect_chains: bool,
     pub create_redirect_pages: bool,
+    pub redirect_list: Option<RedirectList>,
+}
+
+pub struct Redirect<'a> {
+    pub source: &'a str,
+    pub target: &'a str,
+}
+
+type RedirectListRenderer = Box<dyn FnOnce(Vec<Redirect>) -> String>;
+
+pub struct RedirectList {
+    pub file_name: &'static str,
+    pub content_renderer: RedirectListRenderer,
 }
 
 impl Default for RenderConfig {
@@ -22,6 +35,7 @@ impl Default for RenderConfig {
             fallback_page_name: "404".to_owned(),
             resolve_redirect_chains: true,
             create_redirect_pages: true,
+            redirect_list: None,
         }
     }
 }
@@ -154,12 +168,29 @@ impl Router {
         }
 
         if config.create_redirect_pages {
-            for (source, target) in self.redirects {
+            for (source, target) in &self.redirects {
+                let target = target.to_owned();
                 self.routes.insert(
-                    source,
+                    source.to_owned(),
                     Box::new(move || Self::render_redirect_page(&target)),
                 );
             }
+        }
+
+        if let Some(renderer) = config.redirect_list {
+            let redirects = self
+                .redirects
+                .iter()
+                .map(|(source, target)| Redirect { source, target })
+                .collect();
+
+            let redirect_list = (renderer.content_renderer)(redirects);
+
+            let mut export_path = output_path.to_path_buf();
+            export_path.push(renderer.file_name);
+
+            fs::create_dir_all(export_path.parent().unwrap())?;
+            fs::write(export_path, redirect_list)?;
         }
 
         for (mut path, page) in self.fallbacks {
