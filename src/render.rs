@@ -96,12 +96,12 @@ impl Router {
             fs::write(export_path, page())?;
         }
 
-        for (path, page) in map.extra_files {
+        for (path, file) in map.extra_files {
             let mut export_path = output_path.to_path_buf();
             export_path.push(path);
 
             fs::create_dir_all(export_path.parent().unwrap())?;
-            fs::write(export_path, page())?;
+            fs::write(export_path, file())?;
         }
 
         Ok(())
