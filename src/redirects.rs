@@ -30,7 +30,7 @@ impl Redirect {
     /// The output includes meta tags and JavaScript to facilitate the redirect.
     /// In case both fail, a clickable link is included that points to the target path.
     pub fn base_redirect_page() -> RedirectPageRenderer {
-        Box::new(|target_url| {
+        Box::new(|target| {
             format!(
                 r#"<!DOCTYPE HTML>
 <html lang="en">
@@ -50,7 +50,7 @@ impl Redirect {
     <p>Redirecting to <a href="{0}">{0}</a>...</p>
 </body>
 </html>"#,
-                target_url
+                target
             )
         })
     }
