@@ -2,20 +2,33 @@ use std::collections::{HashMap, HashSet};
 
 use crate::Router;
 
+/// Represents a redirection from a source path to a target path.
 pub struct Redirect {
     pub source: String,
     pub target: String,
 }
 
+/// A function that, given a target path, renders a page that redirects to it.
 pub type RedirectPageRenderer = Box<dyn Fn(&str) -> String>;
+
+/// A function that renders a list of redirects, given a vector of `Redirect` objects.
+/// Redirect lists can be utilized by static hosting services.
 pub type RedirectListRenderer = Box<dyn FnOnce(Vec<Redirect>) -> String>;
 
+/// Configuration for generating a redirect list file.
 pub struct RedirectList {
+    /// The name of the output file.
     pub file_name: &'static str,
+    /// Function that takes a list of `Redirect` objects and returns the redirect list's content.
     pub content_renderer: RedirectListRenderer,
 }
 
 impl Redirect {
+    /// Returns a default redirect page renderer.
+    ///
+    /// This renderer produces an HTML page that immediately redirects the user to the specified target path.
+    /// The output includes meta tags and JavaScript to facilitate the redirect.
+    /// In case both fail, a clickable link is included that points to the target path.
     pub fn base_redirect_page() -> RedirectPageRenderer {
         Box::new(|target_url| {
             format!(
@@ -44,6 +57,10 @@ impl Redirect {
 }
 
 impl RedirectList {
+    /// Creates a `RedirectList` configuration for Cloudflare Pages.
+    ///
+    /// The generated file will be named `_redirects` and contain the list of redirects in a format
+    /// compatible with Cloudflare Pages.
     pub fn for_cloudflare_pages() -> Self {
         RedirectList {
             file_name: "_redirects",
@@ -57,6 +74,9 @@ impl RedirectList {
         }
     }
 
+    /// Creates a `RedirectList` configuration for [Static Web Server](https://static-web-server.net/).
+    ///
+    /// The generated file will be named `config.toml` and contain the list of redirects as an array of tables.
     pub fn for_static_web_server() -> Self {
         RedirectList {
             file_name: "config.toml",
@@ -83,6 +103,14 @@ impl RedirectList {
 }
 
 impl Router {
+    /// Resolves chained redirects into their final target path.
+    ///
+    /// This method traverses redirect chains to avoid cycles and ensure that each source path maps
+    /// to the ultimate target URL.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a cycle is detected in the redirect chain.
     pub(crate) fn resolve_redirects(&self) -> HashMap<String, String> {
         let mut resolved = HashMap::<String, String>::new();
 

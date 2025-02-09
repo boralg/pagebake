@@ -5,24 +5,38 @@ use crate::{
     Router,
 };
 
+/// Mapping of route paths to rendering functions.
 pub struct RenderMap {
+    /// Maps route paths to functions that return HTML content.
     pub pages: HashMap<String, Box<dyn FnOnce() -> String>>,
+    /// Maps additional file paths (e.g. redirect lists) to their content generators.
     pub extra_files: HashMap<String, Box<dyn FnOnce() -> String>>,
 }
 
+/// Mapping of route paths to rendered outputs.
 pub struct OutputMap {
+    /// Maps route paths to their rendered HTML content.
     pub pages: HashMap<String, String>,
+    /// Maps additional file paths to their rendered content.
     pub extra_files: HashMap<String, String>,
 }
 
+/// Configuration options for the rendering process.
 pub struct RenderConfig {
+    /// The name of fallback pages.
     pub fallback_page_name: String,
+    /// When true, chains of redirects will be resolved to their final target.
     pub resolve_redirect_chains: bool,
+    /// Optional custom renderer for redirect pages.
+    /// When `None`, no redirect pages are included in the output.
     pub redirect_page_renderer: Option<RedirectPageRenderer>,
+    /// Optional configuration for generating a file containing redirect mappings.
+    /// When `None`, no redirect list is included in the output.
     pub redirect_list: Option<RedirectList>,
 }
 
 impl Default for RenderConfig {
+    /// Provides default rendering configuration.
     fn default() -> Self {
         Self {
             fallback_page_name: "404".to_owned(),
@@ -34,6 +48,11 @@ impl Default for RenderConfig {
 }
 
 impl Router {
+    /// Prepares a `RenderMap` based on registered routes and a `Router` configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - The rendering configuration options.
     pub(crate) fn prepare_map(mut self, config: RenderConfig) -> RenderMap {
         if config.resolve_redirect_chains {
             self.redirects = self.resolve_redirects();
@@ -85,6 +104,18 @@ impl Router {
         }
     }
 
+    /// Renders the site to the specified output directory.
+    ///
+    /// This function creates necessary directories and writes rendered pages and any additional files (e.g. redirect lists) to disk.
+    ///
+    /// # Arguments
+    ///
+    /// * `output_path` - The directory where rendered files will be written.
+    /// * `config` - The rendering configuration options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `io::Error` if file operations fail.
     pub fn render(self, output_path: &Path, config: RenderConfig) -> io::Result<()> {
         let map = self.prepare_map(config);
 
@@ -115,6 +146,11 @@ impl Router {
         Ok(())
     }
 
+    /// Renders the site into an in-memory map.
+    ///
+    /// Returns an `OutputMap` where:
+    /// - Keys represent the file paths (relative to the site root)
+    /// - Values are the rendered content for each HTML page and and any additional files (e.g. redirect lists).
     pub fn render_to_map(self, config: RenderConfig) -> OutputMap {
         let map = self.prepare_map(config);
 
