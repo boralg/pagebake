@@ -1,13 +1,14 @@
 use std::{
-    collections::{HashMap, HashSet},
-    fs, io,
-    path::{Path, PathBuf},
-    rc::Rc,
+    collections::HashMap,
+    fs,
+    io,
+    path::Path,
 };
 
 use redirects::{Redirect, RedirectList, RedirectPageRenderer};
 
 pub mod redirects;
+pub mod render;
 
 pub struct Router {
     routes: HashMap<String, Box<dyn FnOnce() -> String>>,
@@ -153,55 +154,12 @@ impl Router {
         self.merge(router)
     }
 
-    pub fn render(mut self, output_path: &Path, config: RenderConfig) -> io::Result<()> {
+    pub fn render(self, output_path: &Path, config: RenderConfig) -> io::Result<()> {
+        let map = self.prepare_map(config);
+
         fs::create_dir_all(output_path)?;
 
-        if config.resolve_redirect_chains {
-            self.redirects = self.resolve_redirects();
-        }
-
-        if let Some(renderer) = config.redirect_page_renderer {
-            let renderer = Rc::new(renderer);
-
-            for (source, target) in &self.redirects {
-                let renderer = Rc::clone(&renderer);
-                let target = target.to_owned();
-
-                self.routes
-                    .insert(source.to_owned(), Box::new(move || renderer(&target)));
-            }
-        }
-
-        for (mut path, page) in self.fallbacks {
-            if !path.ends_with("/") {
-                path.push('/');
-            }
-            path.push_str(&config.fallback_page_name);
-
-            if self.routes.contains_key(&path) {
-                panic!("Overlap with fallback handler. Route `{path}` already exists");
-            }
-
-            self.routes.insert(path, page);
-        }
-
-        if let Some(renderer) = config.redirect_list {
-            let redirects = self
-                .redirects
-                .iter()
-                .map(|(source, target)| Redirect { source, target })
-                .collect();
-
-            let redirect_list = (renderer.content_renderer)(redirects);
-
-            let mut export_path = output_path.to_path_buf();
-            export_path.push(renderer.file_name);
-
-            fs::create_dir_all(export_path.parent().unwrap())?;
-            fs::write(export_path, redirect_list)?;
-        }
-
-        for (path, page) in self.routes {
+        for (path, page) in map.pages {
             let page_path = match path.strip_prefix("/").unwrap() {
                 "" => "index",
                 path => path,
@@ -210,6 +168,14 @@ impl Router {
             let mut export_path = output_path.to_path_buf();
             export_path.push(page_path);
             export_path.set_extension("html");
+
+            fs::create_dir_all(export_path.parent().unwrap())?;
+            fs::write(export_path, page())?;
+        }
+
+        for (path, page) in map.extra_files {
+            let mut export_path = output_path.to_path_buf();
+            export_path.push(path);
 
             fs::create_dir_all(export_path.parent().unwrap())?;
             fs::write(export_path, page())?;

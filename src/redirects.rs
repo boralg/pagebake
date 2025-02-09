@@ -2,9 +2,9 @@ use std::collections::{HashMap, HashSet};
 
 use crate::Router;
 
-pub struct Redirect<'a> {
-    pub source: &'a str,
-    pub target: &'a str,
+pub struct Redirect {
+    pub source: String,
+    pub target: String,
 }
 
 pub type RedirectPageRenderer = Box<dyn Fn(&str) -> String>;
@@ -15,7 +15,7 @@ pub struct RedirectList {
     pub content_renderer: RedirectListRenderer,
 }
 
-impl Redirect<'_> {
+impl Redirect {
     pub fn base_redirect_page() -> RedirectPageRenderer {
         Box::new(|target_url| {
             format!(
