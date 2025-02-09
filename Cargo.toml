@@ -2,5 +2,11 @@
 name = "pagebake"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "Simple Static Site Generator library"
+repository = "https://github.com/boralg/pagebake"
+readme = "README.md"
+keywords = ["static-site", "site-generator", "html", "ssg"]
+categories = ["web-programming", "development-tools"]
 
 [dependencies]
