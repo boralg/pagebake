@@ -1,10 +1,18 @@
 use std::{collections::HashMap, fs, io, path::Path, rc::Rc};
 
-use crate::{redirects::{Redirect, RedirectList, RedirectPageRenderer}, Router};
+use crate::{
+    redirects::{Redirect, RedirectList, RedirectPageRenderer},
+    Router,
+};
 
 pub struct RenderMap {
     pub pages: HashMap<String, Box<dyn FnOnce() -> String>>,
     pub extra_files: HashMap<String, Box<dyn FnOnce() -> String>>,
+}
+
+pub struct OutputMap {
+    pub pages: HashMap<String, String>,
+    pub extra_files: HashMap<String, String>,
 }
 
 pub struct RenderConfig {
@@ -105,5 +113,22 @@ impl Router {
         }
 
         Ok(())
+    }
+
+    pub fn render_to_map(self, config: RenderConfig) -> OutputMap {
+        let map = self.prepare_map(config);
+
+        OutputMap {
+            pages: map
+                .pages
+                .into_iter()
+                .map(|(path, page)| (path, page()))
+                .collect(),
+            extra_files: map
+                .extra_files
+                .into_iter()
+                .map(|(path, file)| (path, file()))
+                .collect(),
+        }
     }
 }
