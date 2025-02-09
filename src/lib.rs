@@ -1,11 +1,4 @@
-use std::{
-    collections::HashMap,
-    fs,
-    io,
-    path::Path,
-};
-
-use redirects::{Redirect, RedirectList, RedirectPageRenderer};
+use std::collections::HashMap;
 
 pub mod redirects;
 pub mod render;
@@ -14,24 +7,6 @@ pub struct Router {
     routes: HashMap<String, Box<dyn FnOnce() -> String>>,
     redirects: HashMap<String, String>,
     fallbacks: HashMap<String, Box<dyn FnOnce() -> String>>,
-}
-
-pub struct RenderConfig {
-    pub fallback_page_name: String,
-    pub resolve_redirect_chains: bool,
-    pub redirect_page_renderer: Option<RedirectPageRenderer>,
-    pub redirect_list: Option<RedirectList>,
-}
-
-impl Default for RenderConfig {
-    fn default() -> Self {
-        Self {
-            fallback_page_name: "404".to_owned(),
-            resolve_redirect_chains: false,
-            redirect_page_renderer: Some(Redirect::base_redirect_page()),
-            redirect_list: None,
-        }
-    }
 }
 
 pub enum Response {
@@ -152,35 +127,5 @@ impl Router {
             .collect();
 
         self.merge(router)
-    }
-
-    pub fn render(self, output_path: &Path, config: RenderConfig) -> io::Result<()> {
-        let map = self.prepare_map(config);
-
-        fs::create_dir_all(output_path)?;
-
-        for (path, page) in map.pages {
-            let page_path = match path.strip_prefix("/").unwrap() {
-                "" => "index",
-                path => path,
-            };
-
-            let mut export_path = output_path.to_path_buf();
-            export_path.push(page_path);
-            export_path.set_extension("html");
-
-            fs::create_dir_all(export_path.parent().unwrap())?;
-            fs::write(export_path, page())?;
-        }
-
-        for (path, page) in map.extra_files {
-            let mut export_path = output_path.to_path_buf();
-            export_path.push(path);
-
-            fs::create_dir_all(export_path.parent().unwrap())?;
-            fs::write(export_path, page())?;
-        }
-
-        Ok(())
     }
 }
