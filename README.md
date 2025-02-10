@@ -1,6 +1,6 @@
-# Pagebake
+# pagebake
 
-Pagebake is a simple, modular static site generator library. Inspired by [Axum](https://crates.io/crates/axum), Pagebake provides an intuitive API for defining routes, handling redirects, and rendering static HTML pages.
+`pagebake` is a simple, modular static site generator library. Inspired by [`axum`](https://crates.io/crates/axum), `pagebake` provides an intuitive API for defining routes, handling redirects, and rendering static HTML pages.
 
 ## Features
 
@@ -19,7 +19,7 @@ Pagebake is a simple, modular static site generator library. Inspired by [Axum](
 
 ### Via Cargo
 
-Add Pagebake to your `Cargo.toml`:
+Add `pagebake` to your `Cargo.toml`:
 
 ```bash
 cargo add pagebake
@@ -95,7 +95,7 @@ fn main() {
 
 ### Redirects and Custom Rendering
 
-Pagebake supports custom redirect page rendering. By default, a simple HTML page is generated that uses meta tags and JavaScript to perform the redirect. Custom renderers can also be configured.
+`pagebake` supports custom redirect page rendering. By default, a simple HTML page is generated that uses meta tags and JavaScript to perform the redirect. Custom renderers can also be configured.
 
 For advanced redirect list generation (e.g. for [Cloudflare Pages](https://pages.cloudflare.com/) or [Static Web Server](https://static-web-server.net/)), use the provided configurations in the `redirects` module.
 
@@ -136,4 +136,4 @@ fn main() {
 
 ## Contributing
 
-Contributions to Pagebake are welcome! If you have suggestions, encounter issues, or want to contribute new features, please open an issue or submit a pull request.
+Contributions to `pagebake` are welcome! If you have suggestions, encounter issues, or want to contribute new features, please open an issue or submit a pull request.

@@ -144,7 +144,6 @@ impl Router {
     /// Merges another `Router` into the current one.
     ///
     /// This method combines routes, redirects, and fallback handlers from another router.
-    /// Any overlapping routes will cause a panic.
     ///
     /// # Panics
     ///
