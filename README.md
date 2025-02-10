@@ -1,18 +1,18 @@
 # Pagebake
 
-Pagebake is a simple, modular static site generator library written in Rust. Inspired by Axum, Pagebake provides an intuitive API for defining routes, handling redirects, and rendering static HTML pages.
+Pagebake is a simple, modular static site generator library. Inspired by [Axum](https://crates.io/crates/axum), Pagebake provides an intuitive API for defining routes, handling redirects, and rendering static HTML pages.
 
 ## Features
 
 - **Routing and Rendering:**  Define custom routes that map to page-rendering functions. Use simple closures to generate HTML content.
 
-- **Redirect Support:** Easily configure redirects that work with static hosting services, as well as out-of-the box via plain HTML.
+- **Redirect Support:** Easily configure redirects that work with static hosting services, or out-of-the box via plain HTML.
 
-- **Fallback Handlers:** Specify fallback pages for unmatched routes to improve user experience.
+- **Fallback Handlers:** Specify fallback pages for unmatched routes.
 
 - **Router Composition:** Merge and nest routers to build modular and scalable site architectures.
 
-- **Flexible Output Options:** Render your site directly to disk or generate an in-memory map of files for further processing.
+- **Flexible Output Options:** Render your site directly to disk or generate an in-memory map of files.
 
 
 ## Installation
@@ -27,10 +27,10 @@ cargo add pagebake
 
 ### From Source
 
-Clone the repository and build it:
+Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/pagebake.git
+git clone https://github.com/boralg/pagebake.git
 cd pagebake
 ```
 
@@ -97,7 +97,7 @@ fn main() {
 
 Pagebake supports custom redirect page rendering. By default, a simple HTML page is generated that uses meta tags and JavaScript to perform the redirect. Custom renderers can also be configured.
 
-For advanced redirect list generation (e.g. for Cloudflare Pages or Static Web Server), use the provided configurations in the `redirects` module.
+For advanced redirect list generation (e.g. for [Cloudflare Pages](https://pages.cloudflare.com/) or [Static Web Server](https://static-web-server.net/)), use the provided configurations in the `redirects` module.
 
 ```rust
 use pagebake::redirects::RedirectList;
