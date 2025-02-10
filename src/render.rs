@@ -6,11 +6,11 @@ use crate::{
 };
 
 /// Mapping of route paths to rendering functions.
-pub struct RenderMap {
+struct RenderMap {
     /// Maps route paths to functions that return HTML content.
-    pub pages: HashMap<String, Box<dyn FnOnce() -> String>>,
+    pages: HashMap<String, Box<dyn FnOnce() -> String>>,
     /// Maps additional file paths (e.g. redirect lists) to their content generators.
-    pub extra_files: HashMap<String, Box<dyn FnOnce() -> String>>,
+    extra_files: HashMap<String, Box<dyn FnOnce() -> String>>,
 }
 
 /// Mapping of route paths to rendered outputs.
@@ -53,7 +53,7 @@ impl Router {
     /// # Arguments
     ///
     /// * `config` - The rendering configuration options.
-    pub(crate) fn prepare_map(mut self, config: RenderConfig) -> RenderMap {
+    fn prepare_map(mut self, config: RenderConfig) -> RenderMap {
         if config.resolve_redirect_chains {
             self.redirects = self.resolve_redirects();
         }
