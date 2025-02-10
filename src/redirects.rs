@@ -57,7 +57,7 @@ impl Redirect {
 }
 
 impl RedirectList {
-    /// Creates a `RedirectList` configuration for Cloudflare Pages.
+    /// Creates a `RedirectList` configuration for [Cloudflare Pages](https://pages.cloudflare.com/).
     ///
     /// The generated file will be named `_redirects` and contain the list of redirects in a format
     /// compatible with Cloudflare Pages.
@@ -106,7 +106,7 @@ impl Router {
     /// Resolves chained redirects into their final target path.
     ///
     /// This method traverses redirect chains to avoid cycles and ensure that each source path maps
-    /// to the ultimate target URL.
+    /// to the ultimate target path.
     ///
     /// # Panics
     ///
