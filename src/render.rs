@@ -2,6 +2,7 @@ use std::{collections::HashMap, fs, io, path::Path, rc::Rc};
 
 use crate::{
     redirects::{Redirect, RedirectList, RedirectPageRenderer},
+    routes::RouteList,
     Router,
 };
 
@@ -30,9 +31,10 @@ pub struct RenderConfig {
     /// Optional custom renderer for redirect pages.
     /// When `None`, no redirect pages are included in the output.
     pub redirect_page_renderer: Option<RedirectPageRenderer>,
-    /// Optional configuration for generating a file containing redirect mappings.
-    /// When `None`, no redirect list is included in the output.
-    pub redirect_list: Option<RedirectList>,
+    /// Optional configurations for generating files containing redirect mappings.
+    /// When empty, no redirect list is included in the output.
+    pub redirect_lists: Vec<RedirectList>,
+    pub route_lists: Vec<RouteList>,
 }
 
 impl Default for RenderConfig {
@@ -42,7 +44,8 @@ impl Default for RenderConfig {
             fallback_page_name: "404".to_owned(),
             resolve_redirect_chains: false,
             redirect_page_renderer: Some(Redirect::base_redirect_page()),
-            redirect_list: None,
+            redirect_lists: vec![],
+            route_lists: vec![],
         }
     }
 }
@@ -58,15 +61,25 @@ impl Router {
             self.redirects = self.resolve_redirects();
         }
 
+        let redirects: Vec<Redirect> = self
+            .redirects
+            .into_iter()
+            .map(|(source, target)| Redirect { source, target })
+            .collect();
+
+        let routes: Vec<String> = self.routes.keys().map(|s| s.to_owned()).collect();
+
         if let Some(renderer) = config.redirect_page_renderer {
             let renderer = Rc::new(renderer);
 
-            for (source, target) in &self.redirects {
+            for redirect in &redirects {
                 let renderer = Rc::clone(&renderer);
-                let target = target.to_owned();
+                let target = redirect.target.to_owned();
 
-                self.routes
-                    .insert(source.to_owned(), Box::new(move || renderer(&target)));
+                self.routes.insert(
+                    redirect.source.to_owned(),
+                    Box::new(move || renderer(&target)),
+                );
             }
         }
 
@@ -85,16 +98,25 @@ impl Router {
 
         let mut extra_files = HashMap::<String, Box<dyn FnOnce() -> String>>::new();
 
-        if let Some(renderer) = config.redirect_list {
-            let redirects = self
-                .redirects
-                .into_iter()
-                .map(|(source, target)| Redirect { source, target })
-                .collect();
+        // TODO: use references
+        for renderer in config.redirect_lists {
+            let redirects = redirects.clone();
+            extra_files.insert(
+                renderer.file_name.to_owned(),
+                Box::new(move || (renderer.content_renderer)(redirects)),
+            );
+        }
+
+        for renderer in config.route_lists {
+            let mut routes = routes.clone();
+            if renderer.include_redirects {
+                let redirects: Vec<String> = redirects.iter().map(|r| r.source.clone()).collect();
+                routes.extend(redirects);
+            }
 
             extra_files.insert(
                 renderer.file_name.to_owned(),
-                Box::new(|| (renderer.content_renderer)(redirects)),
+                Box::new(|| (renderer.content_renderer)(routes)),
             );
         }
 

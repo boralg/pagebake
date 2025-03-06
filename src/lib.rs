@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 pub mod redirects;
 pub mod render;
+pub mod routes;
 
 /// Router type to map paths to pages.
 pub struct Router {
