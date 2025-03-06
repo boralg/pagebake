@@ -93,15 +93,18 @@ fn main() {
 }
 ```
 
-### Redirects and Custom Rendering
+### Redirects, Sitemaps and Custom Rendering
 
 `pagebake` supports custom redirect page rendering. By default, a simple HTML page is generated that uses meta tags and JavaScript to perform the redirect. Custom renderers can also be configured.
 
-For advanced redirect list generation (e.g. for [Cloudflare Pages](https://pages.cloudflare.com/) or [Static Web Server](https://static-web-server.net/)), use the provided configurations in the `redirects` module.
+For redirect list generation (e.g. for [Cloudflare Pages](https://pages.cloudflare.com/) or [Static Web Server](https://static-web-server.net/)), use the provided configurations in the `redirects` module.
+
+The same applies to route lists, which can be used to generate sitemaps.
 
 ```rust
 use pagebake::redirects::RedirectList;
 use pagebake::render::RenderConfig;
+use pagebake::routes::RouteList;
 use pagebake::{get, redirect, Router};
 
 fn main() {
@@ -121,13 +124,15 @@ fn main() {
 
     let config = RenderConfig {
         redirect_page_renderer: Some(redirect),
-        redirect_list: Some(RedirectList::for_cloudflare_pages()),
+        redirect_lists: vec![RedirectList::for_cloudflare_pages()],
+        route_lists: vec![RouteList::sitemap("http://localhost:8080".to_string())],
         ..Default::default()
     };
 
     // This will generate:
     // - An HTML page at "/old-page.html" using the custom redirect renderer.
     // - A "_redirects" file with the list of all redirects.
+    // - A sitemap.xml containing all non-redirect routes.
     let _ = router.render(std::path::Path::new("./public"), config);
 }
 ```

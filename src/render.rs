@@ -31,9 +31,11 @@ pub struct RenderConfig {
     /// Optional custom renderer for redirect pages.
     /// When `None`, no redirect pages are included in the output.
     pub redirect_page_renderer: Option<RedirectPageRenderer>,
-    /// Optional configurations for generating files containing redirect mappings.
+    /// Configurations for generating files containing redirect mappings.
     /// When empty, no redirect list is included in the output.
     pub redirect_lists: Vec<RedirectList>,
+    /// Configurations for generating files containing routes (e.g., for sitemaps).
+    /// When empty, no route list is included in the output.
     pub route_lists: Vec<RouteList>,
 }
 
