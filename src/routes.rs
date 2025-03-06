@@ -7,10 +7,10 @@ pub struct RouteList {
 }
 
 impl RouteList {
-    pub fn sitemap() -> Self {
+    pub fn sitemap(origin_url: String) -> Self {
         RouteList {
             file_name: "sitemap.xml",
-            content_renderer: Box::new(|routes: Vec<String>| {
+            content_renderer: Box::new(move |routes: Vec<String>| {
                 let mut content = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
                 content
                     .push_str("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
@@ -18,7 +18,7 @@ impl RouteList {
                 content.push_str(
                     &routes
                         .iter()
-                        .map(|r| format!("  <url>\n    <loc>{}</loc>\n  </url>", r))
+                        .map(|r| format!("  <url>\n    <loc>{}{}</loc>\n  </url>", &origin_url, r))
                         .collect::<Vec<String>>()
                         .join("\n"),
                 );
