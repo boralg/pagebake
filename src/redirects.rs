@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::Router;
 
 /// Represents a redirection from a source path to a target path.
+#[derive(Debug, Clone)]
 pub struct Redirect {
     pub source: String,
     pub target: String,
